@@ -1,18 +1,14 @@
 import express from 'express';
-import bodyParser from 'body-parser';
-import {MongoClient} from 'mongodb';
+import bodyParser from 'body-parser';∫
 import mongoose from 'mongoose';
 import cors from 'cors';
 import session from 'express-session';
-import sharedsession from 'express-socket.io-session';
 const MongoStore = require('connect-mongo')(session);
 import 'dotenv/config';
 import socketIo from 'socket.io';
 import http from 'http';
 
-
 import apiRoutes from './routes/routes';
-
 
 const PORT = process.env.PORT ;
 const app = express();
@@ -20,31 +16,6 @@ const app = express();
 // Socket IO SERVER CREATION
 const server = http.createServer(app);
 const io = socketIo(server);
-
-io.on("connection", socket => {
-    console.log("New client connected");
-    console.log('socket sessoin ', socket.request.session.userId);
-
-    // setInterval(
-    //   () => getApiAndEmit(socket),
-    //   10000
-    // );
-    // socket.on("login", function(userdata) {
-    //     console.log('login user data',userdata);
-    //     socket.handshake.session.userdata = userdata;
-    //     socket.handshake.session.save();
-    // });
-    // socket.on("logout", function(userdata) {
-    //     console.log('logout user data',userdata);
-    //     if (socket.handshake.session.userdata) {
-    //         delete socket.handshake.session.userdata;
-    //         socket.handshake.session.save();
-    //     }
-    // }); 
-    socket.on("disconnect", () => console.log("Client disconnected"));
-});
-
-
 
 // Connect to Mongoose and set connection variable
 mongoose.connect('mongodb://localhost/lockyourdoor');
@@ -66,20 +37,30 @@ const appSessionVariables = session({
 });
 app.use(appSessionVariables);
 
-// Share the session with socket IO so we know when user loggs in 
-// io.use(sharedsession(appSessionVariables, {
-//     autoSave:true
-// })); 
-
+// Connect session variables with socket IO to access session in request.
 io.use( (socket, next) =>{
     appSessionVariables(socket.request, socket.request.res, next)
+});
+
+io.on("connection", socket => {
+    console.log("New client connected");
+    console.log(socket.request.session) // Unfortunately USERID is not being passed in here as mentined in the email.
+    socket.on("disconnect", () => console.log("Client disconnected"));
+});
+
+// TODO -> this would recieve incoming lat-long coordinates and take action. 
+io.on('track', socket => {
+    let awayLat = socket.latitude; 
+    let awayLong = socket.longtiture; 
 })
 
-
+// Register Middlewares
 app.use(cors('*'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/', apiRoutes)
+
+export default io;
 
 server.listen(PORT, (err) => {
     if (err) {

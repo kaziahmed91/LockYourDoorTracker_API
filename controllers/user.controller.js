@@ -34,6 +34,7 @@ export async function login(req, res, next) {
                 })
             } else if (user) {
                 req.session.userId = user._id;
+                console.log('session', req.session)
                 res.json({
                     status: "success",
                     message: "User has been logged in",
@@ -50,6 +51,7 @@ export async function login(req, res, next) {
 };
 
 export async function track(req, res, next) {
+    // console.log(req.session)
     if (req.session.userId === null) {
         res.json({
             status: 'error', 
@@ -96,7 +98,7 @@ export async function track(req, res, next) {
 
 export async function updateLocation(req, res, next) {
     let {latitude, longtitude} = req.body
-    console.log(latitude,longtitude)
+    // console.log(latitude,longtitude)
     if (req.session.userId === null) {
         res.json({
             status: 'error', 
@@ -111,7 +113,7 @@ export async function updateLocation(req, res, next) {
     }
 
     const user = await UserModel.findOneAndUpdate({_id: req.session.userId}, { latitude, longtitude } );
-    console.log(user)
+    // console.log(user)
     res.json({
         status: "success",
         message: `Your coordinates have been updated as latitude: ${latitude}, longtitude: ${longtitude}`,
@@ -128,10 +130,4 @@ export async function logout(req, res, data) {
             // data: user
         });
     } 
-
-    // res.json({
-    //     status: "success",
-    //     message: "You are logged out",
-    //     // data: user
-    // });
 }
